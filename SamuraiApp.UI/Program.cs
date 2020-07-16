@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic.CompilerServices;
 using SamuraiApp.Data;
 using SamuraiApp.Domain;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace SamuraiApp.UI
@@ -28,7 +30,10 @@ namespace SamuraiApp.UI
             //ReplaceASecretIdentityNotTracked();
             //ReplaceSecretIdentityNotInMemory();
             //CreateSamurai();
-            RetrieveSamuraisCreatedInYesterday();
+            //RetrieveSamuraisCreatedInYesterday();
+            //CreateThenEditSamuraiWithQote();
+            //RetrieveYearUsingDbBuiltInFunction();
+            //RetrieveScalarResult();
             Console.WriteLine("press any key...");
             Console.ReadKey();
         }
@@ -224,5 +229,89 @@ namespace SamuraiApp.UI
                 .Select(a=> new {a.Id , a.Name , Created = EF.Property<DateTime>(a,"Created")} )
                 .ToList();
         }
+
+        private static void CreateThenEditSamuraiWithQote()
+        {
+            var samurai = new Samurai { Name = "Ronin" };
+            var quote = new Quote { Text = "Aren't I Marvelous" };
+            samurai.Quotes.Add(quote);
+            Context.Samurais.Add(samurai);
+            Context.SaveChanges();
+
+            quote.Text += "See what i did there";
+            Context.SaveChanges();
+        }
+    
+        //private static void RetrieveAndUpdateBetterName()
+        //{
+        //    var samurai = Context.Samurais.FirstOrDefault(e=>e.BetterName.FullName =="Black");
+        //    samurai.BetterName.GivenName = "Joe";
+        //    Context.SaveChanges();
+
+        //}
+
+        private static void GetAllSamurais()
+        {
+            var allsamurais = Context.Samurais.ToList();
+        }
+
+        private static void RetrieveYearUsingDbBuiltInFunction()
+        {
+            var battles = Context.Battles
+                 .Select(b => new { b.Name, b.StartDate.Year }).ToList();
+        }
+
+        private static void RetrieveScalarResult()
+           => Context.Samurais
+                .Select(s => new 
+                {
+                    s.Name,
+                    EarliestBattle = SamuraiContext.EarliestBattleFoughtBySamurai(s.Id)
+                }).ToList();
+
+        private static void FilterWithScalarResult()
+            => Context.Samurais
+                    .Where(s => EF.Functions.Like(SamuraiContext.EarliestBattleFoughtBySamurai(s.Id), "%Battle%"))
+                    .Select(s => new
+                    {
+                        s.Name,
+                        EarliestBattle = SamuraiContext.EarliestBattleFoughtBySamurai(s.Id)
+                    })
+                   .ToList();
+
+        private static void SortWithScalar()
+        {
+            var samurai = Context.Samurais
+                .OrderBy(s => SamuraiContext.EarliestBattleFoughtBySamurai(s.Id))
+                .Select(s => new { s.Name, EarliestBattle = SamuraiContext.EarliestBattleFoughtBySamurai(s.Id) })
+                .ToList();
+        }
+
+        private static void SortWithOutReturningScalar()
+        {
+            var samurai = Context.Samurais
+                .OrderBy(s => SamuraiContext.EarliestBattleFoughtBySamurai(s.Id))
+                .ToList();
+        }
+
+        private static void RetrieveBattleDays()
+        {
+            var battle = Context.Battles.Select(b => new { b.Name ,Day = SamuraiContext.DaysInBattle(b.StartDate, b.EndDate) }).ToList();
+        }
+
+        private static void RetrieveBattleDaysWithoutDbFunction()
+        {
+            var battle = Context.Battles.Select(
+                b =>new 
+                {
+                    b.Name,
+                    Days = DateDiffDaysPlusOne(b.StartDate , b.EndDate)
+                }
+                ).ToList();
+        }
+
+        private static int DateDiffDaysPlusOne(DateTime start, DateTime end)
+            => (int)end.Subtract(start).TotalDays + 1;
+
     }
 }

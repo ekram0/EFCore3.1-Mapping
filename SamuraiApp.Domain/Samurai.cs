@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,9 +9,9 @@ namespace SamuraiApp.Domain
 {
     public class Samurai
     {
-        public Samurai(string publicName, string secretName) : this()
+        public Samurai(string name, string secretName) : this()
         {
-            Name = publicName;
+            Name = name;
             SecretIdentity = new SecretIdentity { RealName = secretName };
         }
         public Samurai()
@@ -21,6 +22,9 @@ namespace SamuraiApp.Domain
 
         public int Id { get; set; }
         public string Name { get; set; }
+
+        //public FullNameSamurai BetterName { get; set; }
+
         public List<Quote> Quotes { get; set; }
         public List<SamuraiBattle> SamuraiBattles { get; set; }
         public SecretIdentity SecretIdentity { get; set; }
